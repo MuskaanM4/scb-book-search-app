@@ -1,6 +1,5 @@
-// home page / index 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Input, Table, Button } from 'antd';
 import axios from 'axios';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,11 +14,8 @@ const Home = () => {
   const dispatch = useDispatch();
   const { books, loading } = useSelector((state) => state.books);
 
-  useEffect(() => {
-    searchBooks('harry potter'); // Standaard zoekopdracht bij het laden zodat page niet leeg lijkt
-  }, []);
-
-  const searchBooks = async (query) => {
+  // Gebruik useCallback om searchBooks alleen opnieuw te maken als dispatch verandert
+  const searchBooks = useCallback(async (query) => {
     dispatch(setLoading(true));
     try {
       const response = await axios.get(`https://openlibrary.org/search.json?q=${query}`);
@@ -33,7 +29,12 @@ const Home = () => {
       console.error('Error fetching books:', error);
     }
     dispatch(setLoading(false));
-  };
+  }, [dispatch]);
+
+  // Gebruik useEffect om de standaard zoekopdracht te doen bij laden van de pagina
+  useEffect(() => {
+    searchBooks('harry potter'); // Standaard zoekopdracht bij het laden zodat page niet leeg lijkt
+  }, [searchBooks]);
 
   const handleAddFavorite = (book) => {
     dispatch(addFavorite(book));

@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation'; 
 import { Card, Button, Spin } from 'antd';
 import axios from 'axios';
+import Image from 'next/image'; // Importeer Image van next/image
 
 const BookDetails = () => {
   const params = useParams(); 
@@ -55,10 +56,13 @@ const BookDetails = () => {
       <Card
         title={book.title}
         cover={
-          <img
+          // Vervang de img-tag door de Image component van next/image
+          <Image
             alt={book.title}
             src={`https://covers.openlibrary.org/b/id/${book.covers?.[0]}-L.jpg`}
-            style={{ maxHeight: '400px', objectFit: 'contain' }}
+            width={400} // Specificeer een breedte voor de afbeelding
+            height={600} // Specificeer een hoogte voor de afbeelding
+            style={{ objectFit: 'contain' }}
           />
         }
       >
