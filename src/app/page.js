@@ -1,95 +1,79 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+// home page / index 
+'use client';
+import { useState, useEffect } from 'react';
+import { Input, Table, Button } from 'antd';
+import axios from 'axios';
+import { useDispatch, useSelector } from 'react-redux';
+import { setBooks, setLoading } from '../redux/booksSlice';
+import { addFavorite } from '../redux/favoritesSlice';
+import Link from 'next/link';
+import { toast } from 'react-toastify'; // Import toast uit react-toastify for notifications
+import 'react-toastify/dist/ReactToastify.css'; //css for toast
 
-export default function Home() {
+const Home = () => {
+  const [query, setQuery] = useState('');
+  const dispatch = useDispatch();
+  const { books, loading } = useSelector((state) => state.books);
+
+  useEffect(() => {
+    searchBooks('harry potter'); // Standaard zoekopdracht bij het laden zodat page niet leeg lijkt
+  }, []);
+
+  const searchBooks = async (query) => {
+    dispatch(setLoading(true));
+    try {
+      const response = await axios.get(`https://openlibrary.org/search.json?q=${query}`);
+      const results = response.data.docs.map((book) => ({
+        key: book.key.replace('/works/', ''), // Haal alleen de ID op
+        title: book.title,
+        author: book.author_name?.[0] || 'Unknown',
+      }));
+      dispatch(setBooks(results));
+    } catch (error) {
+      console.error('Error fetching books:', error);
+    }
+    dispatch(setLoading(false));
+  };
+
+  const handleAddFavorite = (book) => {
+    dispatch(addFavorite(book));
+
+    // Toon een notificatie wanneer een boek is toegevoegd aan favorieten
+    toast.success(`${book.title} has been added to your favorites.`, {
+      position: "top-right", // Plaats de notificatie rechtsboven
+      autoClose: 3000, // Automatisch sluiten na 3 seconden
+    });
+  };
+
+  const columns = [
+    { title: 'Title', dataIndex: 'title', key: 'title' },
+    { title: 'Author', dataIndex: 'author', key: 'author' },
+    {
+      title: 'Action',
+      key: 'action',
+      render: (_, record) => (
+        <>
+          <Link href={`/book/${record.key}`}>
+            <Button type="link">View Details</Button>
+          </Link>
+          <Button type="link" onClick={() => handleAddFavorite(record)}>Add to Favorites</Button>
+        </>
+      ),
+    },
+  ];
+
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol>
-          <li>
-            just a test <code>src/app/page.js</code>.
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
-
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-            className={styles.secondary}
-          >
-            Read our docs
-          </a>
-        </div>
-      </main>
-      <footer className={styles.footer}>
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+    <>
+      <Input.Search
+        placeholder="Search for books..."
+        enterButton="Search"
+        size="large"
+        onSearch={searchBooks}
+        onChange={(e) => setQuery(e.target.value)}
+      />
+      <Table columns={columns} dataSource={books} loading={loading} pagination={{ pageSize: 10 }} style={{ marginTop: 20 }} />
+    </>
   );
-}
+};
+
+export default Home;
