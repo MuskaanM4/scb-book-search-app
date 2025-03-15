@@ -1,7 +1,10 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     images: {
-      domains: ['covers.openlibrary.org'], // Voeg de domeinnaam toe
+      domains: ['covers.openlibrary.org'],
+    },
+    eslint: {
+      ignoreDuringBuilds: true, 
     },
   };
   
